@@ -258,7 +258,34 @@ class StreamDecisionForest:
         major_result = stats.mode(results)[0][0]
 
         return major_result
+    
+     def predict_proba(self, X):
+        """
+        Predict class probabilties for X.
 
+        Parameters
+        ----------
+        X : ndarray
+            Input data matrix.
+
+        Returns
+        -------
+        proba_array : ndarray
+            The class probabilities of the input samples.
+        """
+        X = check_array(X)
+        check_is_fitted(self)
+
+        results = Parallel(n_jobs=self.n_jobs)(
+            delayed(tree.predict)(X) for tree in self.estimators_
+        )
+        
+        proba = np.sum(results, axis = 0)/self.n_estimators
+        proba_array = np.zeros((proba.size, 2))
+        for i in range(proba.size):
+            proba_array[i][0] = 1-proba[i]
+            proba_array[i][1] = proba[i]
+        return proba_array
 
 class CascadeStreamForest:
     """
